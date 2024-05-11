@@ -22,16 +22,22 @@ def extract_info(image):
     text = pytesseract.image_to_string(processed_image)
     print("Extracted Text:")
     print(text)
-    name, birth_date = parse_text(text) 
-    return name, birth_date
+    name, birth_date, aadhar_number = parse_text(text) 
+    return name, birth_date, aadhar_number
 
 def parse_text(text):
     name = None
     birth_date = None
+    aadhar_number = None
 
     all_text_list = re.split(r'[\n]', text)
     text_list = list()
     
+    numb = r'(\d+\s+\d+\s+\d+)'
+    unique = re.search(numb, text)
+    if unique:
+        aadhar_number = unique.group(0).strip()
+
     for i in all_text_list:
         if re.match(r'^(\s)+$', i) or i=='':
             continue
@@ -49,14 +55,16 @@ def parse_text(text):
     dob_match_pan = re.search(r'(\d{2}/\d{2}/\d{4})', text, re.IGNORECASE)
     if dob_match_pan:
         birth_date = dob_match_pan.group(0).strip() 
-    return name, birth_date
+    print("num",aadhar_number)
+    return name, birth_date, aadhar_number
+    
 
 def aadhar_name(text_list):
     user_dob = str()
     user_name = str()
     aadhar_dob_pat = r'(YoB|YOB:|DOB:|DOB|AOB)'
     date_ele = str()
-    index = None  # Initialize index variable
+    index = None
     for idx, i in enumerate(text_list):
         if re.search(aadhar_dob_pat, i):
             index = re.search(aadhar_dob_pat, i).span()[1]
@@ -65,7 +73,7 @@ def aadhar_name(text_list):
         else:
             continue
 
-    if index is not None:  # Check if index is assigned a value
+    if index is not None:
         date_str = ''
         for i in date_ele[index:]:
             if re.match(r'\d', i):
@@ -104,12 +112,12 @@ def pan_name(text):
     return pancard_name
 
 def process_image(image):
-    name, birth_date = extract_info(image)
+    name, birth_date, aadhar_number = extract_info(image)
     if birth_date is None:
-        return name, None, None 
+        return name, None, None, None
     else:
-        age=calculate_age(birth_date)
-    return name, birth_date, age
+        age = calculate_age(birth_date)
+    return name, birth_date, age, aadhar_number
 
 def calculate_age(birth_date):
     try:
@@ -133,10 +141,10 @@ def upload_image(request):
         if 'image' in request.FILES:
             uploaded_file = request.FILES['image']
             image = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), -1)
-            name, birth_date, age = process_image(image)
+            name, birth_date, age, aadhar_number = process_image(image)
             if birth_date is None or name is None:
                 return render(request, 'ocr_app/home.html', {'error_message': "Image quality is too poor. Please try again or add the details manually."})
-            return render(request, 'ocr_app/home.html', {'name': name, 'birth_date': birth_date, 'age': age})
+            return render(request, 'ocr_app/home.html', {'name': name, 'birth_date': birth_date, 'age': age, 'aadhar_number': aadhar_number})
         else:
             name = request.POST.get('name')
             birth_date = request.POST.get('birth_date')
@@ -151,6 +159,7 @@ def download_pdf(request):
         'name': request.POST.get('name'),
         'birth_date': request.POST.get('birth_date'),
         'age': request.POST.get('age'),
+        'aadhar_number': request.POST.get('aadhar_number')
     }
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="visiting_pass.pdf"'
@@ -159,4 +168,4 @@ def download_pdf(request):
     pisa_status = pisa.CreatePDF(html, dest=response)
     if pisa_status.err:
        return HttpResponse('We had some errors <pre>' + html + '</pre>')
-    return response
+    return response 

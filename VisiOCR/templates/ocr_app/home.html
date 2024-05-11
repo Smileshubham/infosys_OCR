@@ -41,12 +41,12 @@
 </head>
 <body>
     <div class="container">
-        <div class="visiting-pass">
+        <!-- <div class="visiting-pass">
             <h2>Visiting Pass</h2>
             <p><strong>Name:</strong> {{ name }}</p>
             <p><strong>Date of Birth:</strong> {{ birth_date }}</p>
             <p><strong>Age:</strong> {{ age }}</p>
-        </div>
+        </div> -->
         <form action="{% url 'upload_image' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="file" name="image" accept="image/*" class="file-upload">
@@ -56,6 +56,7 @@
         <form action="{% url 'download_pdf' %}" method="POST">
             {% csrf_token %}
             <input type="hidden" name="name" value="{{ name }}">
+            <input type="hidden" name="aadhar_number" value="{{ aadhar_number }}">
             <input type="hidden" name="birth_date" value="{{ birth_date }}">
             <input type="hidden" name="age" value="{{ age }}">
             <button type="submit" class="download-btn">Download as PDF</button>
