@@ -155,6 +155,7 @@ def upload_image(request):
 
 def download_pdf(request):
     template_path = 'ocr_app/pdf_template.html'
+
     context = {
         'name': request.POST.get('name'),
         'birth_date': request.POST.get('birth_date'),

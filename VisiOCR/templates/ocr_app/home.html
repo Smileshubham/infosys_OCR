@@ -40,28 +40,44 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- <div class="visiting-pass">
-            <h2>Visiting Pass</h2>
-            <p><strong>Name:</strong> {{ name }}</p>
-            <p><strong>Date of Birth:</strong> {{ birth_date }}</p>
-            <p><strong>Age:</strong> {{ age }}</p>
-        </div> -->
+    <div class="instructions">
+        
+    </div>
+    <div class="container" >
         <form action="{% url 'upload_image' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            <input type="file" name="image" accept="image/*" class="file-upload">
-            <button type="submit">Upload Image</button>
+            <input type="file" id="fileInput" name="image" accept="image/*" class="file-upload" autofocus autocomplete="off" accept=".jpg, .jpeg, .png">
+            <button type="submit" id="submitButton" disabled="true">Upload Image</button>
         </form>
         {% if name %}
-        <form action="{% url 'download_pdf' %}" method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="name" value="{{ name }}">
-            <input type="hidden" name="aadhar_number" value="{{ aadhar_number }}">
-            <input type="hidden" name="birth_date" value="{{ birth_date }}">
-            <input type="hidden" name="age" value="{{ age }}">
-            <button type="submit" class="download-btn">Download as PDF</button>
-        </form>
+            <form action="{% url 'download_pdf' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="name" value="{{ name }}">
+                <input type="hidden" name="aadhar_number" value="{{ aadhar_number }}">
+                <input type="hidden" name="birth_date" value="{{ birth_date }}">
+                <input type="hidden" name="age" value="{{ age }}">
+                <button type="submit" class="download-btn">Download as PDF</button>
+            </form>
+        {% endif %}
+
+        {% if not name %}
+            <form action="{% url 'upload_image' %}" method="POST">
+                {% csrf_token %}
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name"><br>
+                <label for="birth_date">Date of Birth:</label>
+                <input type="text" id="birth_date" name="birth_date"><br>
+                <button type="submit">Submit</button>
+            </form>
         {% endif %}
     </div>
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function() {
+            var submitButton = document.getElementById('submitButton');
+            submitButton.disabled = this.files.length === 0; // Enable the button if files are selected
+        });
+
+        
+    </script>
 </body>
 </html>
