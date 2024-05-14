@@ -47,13 +47,15 @@
         <form action="{% url 'upload_image' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="file" id="fileInput" name="image" accept="image/*" class="file-upload" autofocus autocomplete="off" accept=".jpg, .jpeg, .png">
+            <label for="name">Mobile Number:</label>
+                <input type="tel" id="phone" name="phone" placeholder="9876543210" pattern="[7-9]{1}[0-9]{9}" required>
             <button type="submit" id="submitButton" disabled="true">Upload Image</button>
         </form>
         {% if name %}
             <form action="{% url 'download_pdf' %}" method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="name" value="{{ name }}">
-                <input type="hidden" name="aadhar_number" value="{{ aadhar_number }}">
+                <input type="hidden" name="unique_number" value="{{ unique_number }}">
                 <input type="hidden" name="birth_date" value="{{ birth_date }}">
                 <input type="hidden" name="age" value="{{ age }}">
                 <button type="submit" class="download-btn">Download as PDF</button>
@@ -65,8 +67,10 @@
                 {% csrf_token %}
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name"><br>
-                <label for="birth_date">Date of Birth:</label>
-                <input type="text" id="birth_date" name="birth_date"><br>
+                <label for="birth_date">Date of Birth: <input type="date" id="birthday" name="birth_date"></label><br>
+                <input type="hidden" name="age" value="{{ age }}">
+                <label for="name">Mobile Number:</label>
+                <input type="tel" id="phone" name="phone" placeholder="9876543210" pattern="[7-9]{1}[0-9]{9}" required><br>
                 <button type="submit">Submit</button>
             </form>
         {% endif %}
@@ -77,7 +81,16 @@
             submitButton.disabled = this.files.length === 0; // Enable the button if files are selected
         });
 
+        document.getElementById("ckbx").addEventListener("change", function() {
+        var checkbox = document.getElementById("ckbx");
+        var button = document.getElementById("container");
         
+        if (checkbox.checked) {
+            button.disabled = false;
+        } else {
+            button.disabled = true;
+        }
+    });
     </script>
 </body>
 </html>

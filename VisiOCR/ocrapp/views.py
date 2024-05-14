@@ -8,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 import re
 from django.template.loader import get_template
 from xhtml2pdf import pisa
+import io
+from PIL import Image
 
 def home(request):
     return render(request, 'ocr_app/home.html')
@@ -22,21 +24,21 @@ def extract_info(image):
     text = pytesseract.image_to_string(processed_image)
     print("Extracted Text:")
     print(text)
-    name, birth_date, aadhar_number = parse_text(text) 
-    return name, birth_date, aadhar_number
+    name, birth_date, unique_number = parse_text(text) 
+    return name, birth_date, unique_number
 
 def parse_text(text):
     name = None
     birth_date = None
-    aadhar_number = None
+    unique_number = None
 
     all_text_list = re.split(r'[\n]', text)
     text_list = list()
     
-    numb = r'(\d+\s+\d+\s+\d+)'
+    numb= r'(\d+\s+\d+\s+\d+)|[A-Z]{5}[0-9]{4}[A-Z]{1}'
     unique = re.search(numb, text)
     if unique:
-        aadhar_number = unique.group(0).strip()
+        unique_number = unique.group(0).strip()
 
     for i in all_text_list:
         if re.match(r'^(\s)+$', i) or i=='':
@@ -55,8 +57,8 @@ def parse_text(text):
     dob_match_pan = re.search(r'(\d{2}/\d{2}/\d{4})', text, re.IGNORECASE)
     if dob_match_pan:
         birth_date = dob_match_pan.group(0).strip() 
-    print("num",aadhar_number)
-    return name, birth_date, aadhar_number
+    print("num",unique_number)
+    return name, birth_date, unique_number
     
 
 def aadhar_name(text_list):
@@ -112,12 +114,12 @@ def pan_name(text):
     return pancard_name
 
 def process_image(image):
-    name, birth_date, aadhar_number = extract_info(image)
+    name, birth_date, unique_number = extract_info(image)
     if birth_date is None:
         return name, None, None, None
     else:
         age = calculate_age(birth_date)
-    return name, birth_date, age, aadhar_number
+    return name, birth_date, age, unique_number
 
 def calculate_age(birth_date):
     try:
@@ -141,10 +143,10 @@ def upload_image(request):
         if 'image' in request.FILES:
             uploaded_file = request.FILES['image']
             image = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), -1)
-            name, birth_date, age, aadhar_number = process_image(image)
+            name, birth_date, age, unique_number = process_image(image)
             if birth_date is None or name is None:
                 return render(request, 'ocr_app/home.html', {'error_message': "Image quality is too poor. Please try again or add the details manually."})
-            return render(request, 'ocr_app/home.html', {'name': name, 'birth_date': birth_date, 'age': age, 'aadhar_number': aadhar_number})
+            return render(request, 'ocr_app/home.html', {'name': name, 'birth_date': birth_date, 'age': age, 'unique_number': unique_number})
         else:
             name = request.POST.get('name')
             birth_date = request.POST.get('birth_date')
@@ -154,19 +156,21 @@ def upload_image(request):
     return render(request, 'ocr_app/home.html')
 
 def download_pdf(request):
-    template_path = 'ocr_app/pdf_template.html'
+    template_path1 = 'ocr_app/pdf_template1.html'
 
-    context = {
+    context1 = {
         'name': request.POST.get('name'),
         'birth_date': request.POST.get('birth_date'),
         'age': request.POST.get('age'),
-        'aadhar_number': request.POST.get('aadhar_number')
+        'unique_number': request.POST.get('unique_number'),
+        'phone':request.GET.get('phone')
     }
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="visiting_pass.pdf"'
-    template = get_template(template_path)
-    html = template.render(context)
+    template = get_template(template_path1)
+    html = template.render(context1)
     pisa_status = pisa.CreatePDF(html, dest=response)
     if pisa_status.err:
        return HttpResponse('We had some errors <pre>' + html + '</pre>')
     return response 
+
