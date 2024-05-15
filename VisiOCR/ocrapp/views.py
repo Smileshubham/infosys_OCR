@@ -163,7 +163,7 @@ def download_pdf(request):
         'birth_date': request.POST.get('birth_date'),
         'age': request.POST.get('age'),
         'unique_number': request.POST.get('unique_number'),
-        'phone':request.GET.get('phone')
+        'phone': request.POST.get('phone')
     }
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="visiting_pass.pdf"'

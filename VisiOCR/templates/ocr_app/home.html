@@ -67,8 +67,10 @@
                 {% csrf_token %}
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name"><br>
-                <label for="birth_date">Date of Birth: <input type="date" id="birthday" name="birth_date"></label><br>
-                <input type="hidden" name="age" value="{{ age }}">
+                <label for="birth_date">Date of Birth: <input type="date" id="birthday" name="birth_date"></label>
+                <input type="hidden" name="age"><br>
+                <label for="unique_number">Unique Number:</label>  
+                <input type="text" name="unique_number" id="unique_number" required ><br> <!--pattern="[a-zA-Z0-9]+" -->
                 <label for="name">Mobile Number:</label>
                 <input type="tel" id="phone" name="phone" placeholder="9876543210" pattern="[7-9]{1}[0-9]{9}" required><br>
                 <button type="submit">Submit</button>
