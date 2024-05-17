@@ -11,10 +11,11 @@
             padding: 0;
         }
         .container {
-            width: 80%;
             margin: 0 auto;
-            text-align: center;
             padding: 20px;
+            color: #fff;
+            background: linear-gradient(110deg, #a60af3 40%, rgba(0, 0, 0, 0) 30%), 
+                        radial-gradient(farthest-corner at 0% 0%, #7a00cc 70%, #c03fff 70%);
         }
         .visiting-pass {
             border: 2px solid #333;
@@ -22,7 +23,7 @@
             margin-bottom: 20px;
             background-color: #f5f5f5;
         }
-        .download-btn {
+        .download-btn, .upload-btn {
             background-color: #4CAF50;
             border: none;
             color: white;
@@ -40,59 +41,97 @@
     </style>
 </head>
 <body>
-    <div class="instructions">
-        
-    </div>
-    <div class="container" >
+    <div class="container">
+        <h1>Adhere to the Guidelines for Image Upload!</h1>
+        <ul>
+            <li>Submitted image must be an Aadhaar card or PAN card.</li>
+            <li>Select a clear and high-resolution image.</li>
+            <li>Utilize well-scanned documents for optimal results.</li>
+            <li>Submit images in JPEG or PNG format.</li>
+            <li>Avoid background noise and distortions.</li>
+            <li>Enlarge the image to check text readability before submitting.</li>
+        </ul>
         <form action="{% url 'upload_image' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            <input type="file" id="fileInput" name="image" accept="image/*" class="file-upload" autofocus autocomplete="off" accept=".jpg, .jpeg, .png">
-            <label for="name">Mobile Number:</label>
-                <input type="tel" id="phone" name="phone" placeholder="9876543210" pattern="[7-9]{1}[0-9]{9}" required>
-            <button type="submit" id="submitButton" disabled="true">Upload Image</button>
+            <!-- Confirmation Checkbox -->
+            <input type="checkbox" id="confirmCheckbox">
+            <label for="confirmCheckbox">I confirm that the information provided is accurate.</label><br>
+            
+            <!-- File Input -->
+            <input type="file" id="fileInput" name="image" accept=".jpg, .jpeg, .png" class="file-upload" disabled autofocus autocomplete="off">
+            
+            <!-- Phone Number Input -->
+            <label for="phone">Mobile Number:</label>
+            <input type="tel" id="phone" name="phone" placeholder="9876543210" pattern="[7-9]{1}[0-9]{9}" required>
+            <br><br>
+            
+            <!-- Submit Button -->
+            <button type="submit" id="submitButton" disabled>Upload Image</button>
         </form>
-        {% if name %}
-            <form action="{% url 'download_pdf' %}" method="POST">
+
+        {% if name and birth_date and unique_number %}
+            <!-- Form for downloading PDF if details are available -->
+            <form action="{% url 'download_pdf' %}" method="POST" name="form">
                 {% csrf_token %}
                 <input type="hidden" name="name" value="{{ name }}">
-                <input type="hidden" name="unique_number" value="{{ unique_number }}">
                 <input type="hidden" name="birth_date" value="{{ birth_date }}">
                 <input type="hidden" name="age" value="{{ age }}">
-                <button type="submit" class="download-btn">Download as PDF</button>
+                <input type="hidden" name="unique_number" value="{{ unique_number }}">
+                <input type="hidden" name="phone" value="{{ phone }}">
+                <button type="submit" class="download-btn" name="data">Download as PDF</button>
             </form>
-        {% endif %}
-
-        {% if not name %}
-            <form action="{% url 'upload_image' %}" method="POST">
+        {% else %}
+            <!-- Form for entering details and generating visiting pass -->
+            <form action="{% url 'upload_image' %}" method="POST" name="form">
                 {% csrf_token %}
                 <label for="name">Name:</label>
-                <input type="text" id="name" name="name"><br>
-                <label for="birth_date">Date of Birth: <input type="date" id="birthday" name="birth_date"></label>
-                <input type="hidden" name="age"><br>
-                <label for="unique_number">Unique Number:</label>  
-                <input type="text" name="unique_number" id="unique_number" required ><br> <!--pattern="[a-zA-Z0-9]+" -->
-                <label for="name">Mobile Number:</label>
-                <input type="tel" id="phone" name="phone" placeholder="9876543210" pattern="[7-9]{1}[0-9]{9}" required><br>
-                <button type="submit">Submit</button>
+                <input type="text" id="name" name="name" required><br><br>
+                
+                <label for="birth_date">Date of Birth:</label>
+                <input type="date" id="birth_date" name="birth_date" required><br><br>
+                
+                <input type="hidden" name="age" value="{{ age }}"><!-- Hidden age field -->
+                
+                <label for="unique_number">Unique Number:</label>
+                <input type="text" id="unique_number" name="unique_number" required><br><br>
+                
+                <label for="phone">Mobile Number:</label>
+                <input type="tel" id="phone" name="phone" pattern="[7-9]{1}[0-9]{9}" required><br><br>
+                
+                <button type="submit" class="upload-btn" name="data">Generate Visiting Pass</button>
             </form>
         {% endif %}
     </div>
-    <script>
-        document.getElementById('fileInput').addEventListener('change', function() {
-            var submitButton = document.getElementById('submitButton');
-            submitButton.disabled = this.files.length === 0; // Enable the button if files are selected
-        });
 
-        document.getElementById("ckbx").addEventListener("change", function() {
-        var checkbox = document.getElementById("ckbx");
-        var button = document.getElementById("container");
-        
-        if (checkbox.checked) {
-            button.disabled = false;
-        } else {
-            button.disabled = true;
-        }
-    });
+    <!-- jQuery Library -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Enable/Disable file input and submit button based on checkbox and file input
+        $(document).ready(function() {
+            $('#confirmCheckbox').on('change', function() {
+                var isChecked = this.checked;
+                $('#fileInput').prop('disabled', !isChecked);
+                $('#submitButton').prop('disabled', !isChecked || !$('#fileInput').val());
+            });
+
+            $('#fileInput').on('change', function() {
+                $('#submitButton').prop('disabled', !this.files.length || !$('#confirmCheckbox').is(':checked'));
+            });
+        });
+    </script>
+
+    <!-- Google Sheets Integration -->
+    <script>
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyFM_pCh3BKkHFywNPLHH8xrHsoeuaPrpdBZMKbcjEJKnKMKKabk95NcRK_h7JZqiZyZQ/exec';
+        const form = document.forms['contact-form'];
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+                .then(response => alert("Thank you! your form is submitted successfully."))
+                .then(() => { window.location.reload(); })
+                .catch(error => console.error('Error!', error.message));
+        });
     </script>
 </body>
 </html>
